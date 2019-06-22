@@ -4,6 +4,7 @@
 import json # to parse JSON
 import csv # to export to CSV
 import os # operating system dependent functionality
+import datetime
 
 # packages
 from dotenv import load_dotenv
@@ -86,25 +87,35 @@ while symbol not in stop_loop:
 
 symbol_keys = list(investor_data.keys())
 
+date_time = datetime.date.today()
+
+print("\n")
+print("-------------------------")
+print(f"REQUEST AT: {date_time}")
+print("-------------------------")
+
 
 for key in symbol_keys:
 
+    print("\n")
     print("-------------------------")
-    #print(f"SELECTED SYMBOL: {key}")
+    print(f"Stock Ticker: {key}")
     print("-------------------------")
-    print("REQUEST AT: 2018-02-20 02:00pm")
-    print("-------------------------")
+    print("LATEST DAY: ", investor_data[key]["last_refreshed"])
     #print(f"LATEST DAY: {last_refreshed}")
+    print("LATEST CLOSE: ", to_usd(float(investor_data[key]["latest_close"])))
     #print(f"LATEST CLOSE: {to_usd(float(latest_close))}")
+    print("RECENT HIGH: ", to_usd(float(investor_data[key]["recent_high"])))
     #print(f"RECENT HIGH: {to_usd(float(recent_high))}")
+    print("RECENT LOW: ", to_usd(float(investor_data[key]["recent_low"])))
     #print(f"RECENT LOW: {to_usd(float(recent_low))}")
     print("-------------------------")
+    print(investor_data[key]["recommendation"])
     print("RECOMMENDATION: BUY!")
     print("RECOMMENDATION REASON: TODO")
     print("-------------------------")
     #print(f"DATA WRITTEN TO 'PRICES.CSV': {csv_file_path}...")
     print("-------------------------")
-    print("HAPPY INVESTING!")
-    print("-------------------------")
 
 
+print("\n")
