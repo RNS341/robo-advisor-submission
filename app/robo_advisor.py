@@ -9,7 +9,7 @@ import datetime
 # packages
 from dotenv import load_dotenv
 import requests
-import pandas as pd
+
 
 load_dotenv() # loads from .env
 
@@ -32,7 +32,12 @@ while symbol not in stop_loop:
     test = False
 
     while test == False:
-        if 'Error Message' in parsed_response.keys():
+        if len(symbol) > 5:
+            symbol = input("Ticker invalid.  Please enter a new ticker: ")
+            request_url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}"
+            response = requests.get(request_url)
+            parsed_response = json.loads(response.text) 
+        elif 'Error Message' in parsed_response.keys():
             symbol = input("Ticker invalid.  Please enter a new ticker: ")
             request_url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}"
             response = requests.get(request_url)
@@ -40,7 +45,7 @@ while symbol not in stop_loop:
         else: 
             test = True
     
-    investor_data[symbol] = {"last_refreshed": [], "close_date": [], "latest_close": [], "recent_high": [], "recent_low": [], "recommendation": []}
+    investor_data[symbol] = {"last_refreshed": [], "close_date": [], "latest_close": [], "recent_high": [], "recent_low": [], "recommendation": [], "rationale": []}
     tsd = parsed_response["Time Series (Daily)"]
     dates = list(tsd.keys()) #create a list of all dates
     latest_day = dates[0] #reference the first date which is the most recent
@@ -61,10 +66,15 @@ while symbol not in stop_loop:
     investor_data[symbol]["recent_high"] = max(high_prices)
     investor_data[symbol]["recent_low"] = min(low_prices)
 
-    if float(investor_data[symbol]["latest_close"]) < float(investor_data[symbol]["recent_low"]) * 1.2:
-        investor_data[symbol]["recommendation"] = "Buy"
+    if float(investor_data[symbol]["latest_close"]) < float(investor_data[symbol]["recent_low"]) * 1.1:
+        investor_data[symbol]["recommendation"] = "BUY"
+        investor_data[symbol]["rationale"] = "RECOMMENDATION REASON: PRICE 110 PERCENT OF THE LOW OR LESS"
+    if float(investor_data[symbol]["latest_close"]) > float(investor_data[symbol]["recent_high"]) * 1.1:
+        investor_data[symbol]["recommendation"] = "SELL"
+        investor_data[symbol]["rationale"] = "RECOMMENDATION REASON: PRICE GREATER THAN 110 PERCENT OF HIGH"
     else:
-        investor_data[symbol]["recommendation"] = "Hold"
+        investor_data[symbol]["recommendation"] = "HOLD"
+        investor_data[symbol]["rationale"] = "STOCK DOES NOT APPEAR TO BE AT DISCOUNT OR OVERPRICED"
 
     csv_file_path = os.path.join(os.path.dirname(__file__), "..", "data", symbol + ".csv")
 
@@ -87,11 +97,12 @@ while symbol not in stop_loop:
 
 symbol_keys = list(investor_data.keys())
 
-date_time = datetime.date.today()
+now = datetime.datetime.now()
+dt_string = now.strftime("%m/%d/%Y %I:%M:%S %p")
 
 print("\n")
 print("-------------------------")
-print(f"REQUEST AT: {date_time}")
+print("REQUEST AT:", dt_string)
 print("-------------------------")
 
 
@@ -102,17 +113,14 @@ for key in symbol_keys:
     print(f"Stock Ticker: {key}")
     print("-------------------------")
     print("LATEST DAY: ", investor_data[key]["last_refreshed"])
-    #print(f"LATEST DAY: {last_refreshed}")
     print("LATEST CLOSE: ", to_usd(float(investor_data[key]["latest_close"])))
-    #print(f"LATEST CLOSE: {to_usd(float(latest_close))}")
     print("RECENT HIGH: ", to_usd(float(investor_data[key]["recent_high"])))
-    #print(f"RECENT HIGH: {to_usd(float(recent_high))}")
     print("RECENT LOW: ", to_usd(float(investor_data[key]["recent_low"])))
-    #print(f"RECENT LOW: {to_usd(float(recent_low))}")
     print("-------------------------")
-    print(investor_data[key]["recommendation"])
-    print("RECOMMENDATION: BUY!")
-    print("RECOMMENDATION REASON: TODO")
+    print("RECOMMENDATION: ", investor_data[key]["recommendation"])
+    print("RATIONALE: ", investor_data[key]["rationale"])
+ 
+
     print("-------------------------")
     #print(f"DATA WRITTEN TO 'PRICES.CSV': {csv_file_path}...")
     print("-------------------------")
